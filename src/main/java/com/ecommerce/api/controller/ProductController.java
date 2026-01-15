@@ -40,7 +40,7 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
     }
 
-    @DeleteMapping("/id")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ProductDTO> deleteProduct(@PathVariable Long id, @AuthenticationPrincipal User user){
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();

@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.NotNull;
+
+@NotNull
 @Data
 @Builder
 public class ProductDTO {
