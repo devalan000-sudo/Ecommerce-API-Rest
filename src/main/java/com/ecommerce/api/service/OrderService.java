@@ -6,6 +6,7 @@ import com.ecommerce.api.entity.User;
 import java.util.List;
 
 public interface OrderService {
-    OrderResponse createOrder();
+    void createOrder(User user);
+
     List<OrderResponse> getMyOrders(User user);
 }
