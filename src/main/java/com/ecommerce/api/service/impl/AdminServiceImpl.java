@@ -12,11 +12,13 @@ import com.ecommerce.api.repository.OrderRepository;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.service.AdminService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -48,7 +50,9 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public ProductResponse createProduct(ProductRequest request) {
         Product product = productMapper.toEntity(request);
-        return productMapper.toProductResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        log.info("Admin: Producto creado - {}", saved.getName());
+        return productMapper.toProductResponse(saved);
     }
 
     @Override
@@ -64,6 +68,7 @@ public class AdminServiceImpl implements AdminService {
             product.setImageUrl(request.getImageUrl());
 
             Product updatedProduct = productRepository.save(product);
+            log.info("Admin: Producto actualizado - {}", updatedProduct.getName());
 
         return productMapper.toProductResponse(updatedProduct);
     }
@@ -74,6 +79,7 @@ public class AdminServiceImpl implements AdminService {
             throw new BusinessException("No se puede eliminar: Producto no encontrado");
         }
         productRepository.getReferenceById(id);
+        log.info("Admin: Producto eliminado con ID: {}", id);
     }
 
     @Override

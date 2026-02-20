@@ -13,6 +13,7 @@ import com.ecommerce.api.repository.OrderRepository;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -68,6 +70,8 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         cartItemRepository.deleteAll(cartItems);
+        
+        log.info("Pedido creado para usuario {} - Total: ${}", user.getUsername(), total);
     }
 
     @Override

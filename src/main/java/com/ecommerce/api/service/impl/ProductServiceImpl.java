@@ -7,11 +7,13 @@ import com.ecommerce.api.mappers.ProductMapper;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -39,6 +41,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO createProduct(ProductDTO dto) {
         Product product = productMapper.toEntity(dto);
         Product savedProduct = productRepository.save(product);
+        log.info("Producto creado: {}", savedProduct.getName());
         return productMapper.toDto(savedProduct);
     }
 
@@ -49,6 +52,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourseNotFoundException("Producto no encontrado"));
         productMapper.updateEntityFromDto(dto, product);
         Product updatedProduct = productRepository.save(product);
+        log.info("Producto actualizado: {}", updatedProduct.getName());
         return productMapper.toDto(updatedProduct);
     }
 
@@ -57,5 +61,6 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) throw  new ResourseNotFoundException("Producto no encontrado");
         productRepository.deleteById(id);
+        log.info("Producto eliminado con ID: {}", id);
     }
 }

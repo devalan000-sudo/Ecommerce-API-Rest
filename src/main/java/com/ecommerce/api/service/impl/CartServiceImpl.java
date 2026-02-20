@@ -12,11 +12,13 @@ import com.ecommerce.api.repository.CartItemRepository;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.service.CartService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
@@ -50,6 +52,9 @@ public class CartServiceImpl implements CartService {
                         .build());
         cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
         cartItemRepository.save(cartItem);
+        
+        log.info("Producto {} agregado al carrito del usuario {}", product.getName(), user.getUsername());
+        
         return getCart(user);
     }
 
@@ -68,7 +73,8 @@ public class CartServiceImpl implements CartService {
             p.setStock(p.getStock() -  item.getQuantity());
         }
         cartItemRepository.deleteAll(items);
-
+        
+        log.info("Checkout completado para usuario {}", user.getUsername());
     }
 
     @Override
@@ -79,7 +85,10 @@ public class CartServiceImpl implements CartService {
         if (!cartItem.getUser().getId().equals(user.getId())){
             throw new BusinessException("No tienes permiso para eliminar este item");
         }
-            cartItemRepository.delete(cartItem);
+        cartItemRepository.delete(cartItem);
+        
+        log.info("Item {} eliminado del carrito del usuario {}", carrItemId, user.getUsername());
+        
         return getCart(user);
     }
 
@@ -87,6 +96,9 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public List<CartItemResponse> clearCart(User user) {
         cartItemRepository.deleteByUser(user);
+        
+        log.info("Carrito limpiado para usuario {}", user.getUsername());
+        
         return List.of();
     }
 }

@@ -8,11 +8,13 @@ import com.ecommerce.api.repository.UserRepository;
 import com.ecommerce.api.security.JwtService;
 import com.ecommerce.api.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -31,6 +33,8 @@ public class AuthServiceImpl implements AuthService {
         var user = userRepository.findByUsername(authRequest.getUsername())
                 .orElseThrow();
         var jwtToke = jwtService.generateToken(user);
+        
+        log.info("Login exitoso para usuario: {}", authRequest.getUsername());
 
         AuthResponse  authResponse = new AuthResponse();
         authResponse.setToken(jwtToke);
@@ -44,7 +48,9 @@ public class AuthServiceImpl implements AuthService {
                     .password(passwordEncoder.encode(authRequest.getPassword()))
                     .role(Role.CLIENT)
                     .build();
-            userRepository .save(user);
+            userRepository.save(user);
+            
+            log.info("Nuevo usuario registrado: {}", authRequest.getUsername());
 
             var jwtToken = jwtService.generateToken(user);
             AuthResponse authResponse = new AuthResponse();
