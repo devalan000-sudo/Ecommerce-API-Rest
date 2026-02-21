@@ -37,6 +37,7 @@ public class AuthController {
     @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta de usuario")
     @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente", 
                  content = @Content(schema = @Schema(implementation = AuthResponse.class)))
+    @ApiResponse(responseCode = "400", description = "El usuario ya existe", content = @Content)
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register (@RequestBody AuthRequest request){
         return ResponseEntity.ok(authService.register(request));
@@ -49,5 +50,24 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login (@RequestBody AuthRequest request){
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @Operation(summary = "Refrescar token", description = "Obtiene un nuevo access token usando el refresh token")
+    @ApiResponse(responseCode = "200", description = "Token refrescado exitosamente", 
+                 content = @Content(schema = @Schema(implementation = AuthResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Refresh token inválido o expirado", content = @Content)
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken (@RequestBody RefreshTokenRequest request){
+        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    }
+
+    @Operation(summary = "Cerrar sesión", description = "Invalida el refresh token del usuario")
+    @ApiResponse(responseCode = "200", description = "Logout exitoso")
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout (@AuthenticationPrincipal User user){
+        authService.logout(user);
+        return ResponseEntity.ok().build();
     }
 }

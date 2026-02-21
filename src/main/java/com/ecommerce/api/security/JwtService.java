@@ -17,12 +17,28 @@ import java.util.function.Function;
 public class JwtService {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
+    
+    @Value("${jwt.expiration}")
+    private long JWT_EXPIRATION;
+    
+    @Value("${jwt.refresh-expiration}")
+    private long REFRESH_TOKEN_EXPIRATION;
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    
+    public String generateRefreshToken(UserDetails userDetails) {
+        return Jwts.builder()
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
+                .claim("type", "refresh")
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -39,6 +55,21 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username =extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+    
+    public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        final boolean isExpired = isTokenExpired(token);
+        return (username.equals(userDetails.getUsername()) && !isExpired);
+    }
+    
+    public boolean isRefreshToken(String token) {
+        try {
+            final Claims claims = extractAllClaims(token);
+            return "refresh".equals(claims.get("type"));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean isTokenExpired(String token) {
