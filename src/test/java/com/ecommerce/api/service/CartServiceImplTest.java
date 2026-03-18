@@ -46,6 +46,7 @@ class CartServiceImplTest {
         return User.builder()
                 .id(1L)
                 .username("testuser")
+                .email("testuser@test.com")
                 .build();
     }
 
@@ -177,7 +178,7 @@ class CartServiceImplTest {
     @Test
     void removeFromCart_WhenItemNotBelongsToUser_ThrowsException() {
         User user = createTestUser();
-        User otherUser = User.builder().id(2L).username("otheruser").build();
+        User otherUser = User.builder().id(2L).username("otheruser").email("other@test.com").build();
         
         CartItem cartItem = CartItem.builder()
                 .id(1L)

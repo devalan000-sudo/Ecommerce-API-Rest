@@ -34,22 +34,42 @@ public class AuthController {
         return ResponseEntity.ok(userMapper.userToUserResponseDTO(user));
     }
 
-    @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta de usuario")
-    @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente", 
+    @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta de usuario (requiere confirmación por email)")
+    @ApiResponse(responseCode = "200", description = "Usuario registrado, revisa el correo para confirmar", 
                  content = @Content(schema = @Schema(implementation = AuthResponse.class)))
-    @ApiResponse(responseCode = "400", description = "El usuario ya existe", content = @Content)
+    @ApiResponse(responseCode = "400", description = "El email ya está registrado", content = @Content)
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register (@RequestBody AuthRequest request){
         return ResponseEntity.ok(authService.register(request));
     }
 
-    @Operation(summary = "Iniciar sesión", description = "Autentica un usuario y retorna el token JWT")
+    @Operation(summary = "Iniciar sesión", description = "Autentica un usuario y retorna el token JWT (requiere email confirmado)")
     @ApiResponse(responseCode = "200", description = "Login exitoso", 
                  content = @Content(schema = @Schema(implementation = AuthResponse.class)))
-    @ApiResponse(responseCode = "401", description = "Credenciales inválidas", content = @Content)
+    @ApiResponse(responseCode = "401", description = "Credenciales inválidas o email no confirmado", content = @Content)
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login (@RequestBody AuthRequest request){
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @Operation(summary = "Confirmar email", description = "Confirma el email del usuario con el token")
+    @ApiResponse(responseCode = "200", description = "Email confirmado exitosamente", 
+                 content = @Content(schema = @Schema(implementation = AuthResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Token inválido o expirado", content = @Content)
+    @GetMapping("/confirm")
+    public ResponseEntity<AuthResponse> confirmEmail (@RequestParam String token){
+        return ResponseEntity.ok(authService.confirmEmail(token));
+    }
+
+    @Operation(summary = "Reenviar correo de confirmación", description = "Reenvía el correo de confirmación al email proporcionado")
+    @ApiResponse(responseCode = "200", description = "Correo reenviado", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Usuario no encontrado o ya confirmado", content = @Content)
+    @PostMapping("/resend-confirmation")
+    public ResponseEntity<AuthResponse> resendConfirmation (@RequestBody ResendConfirmationRequest request){
+        authService.resendConfirmationEmail(request.getEmail());
+        return ResponseEntity.ok(AuthResponse.builder()
+                .message("Correo de confirmación reenviado")
+                .build());
     }
 
     @Operation(summary = "Refrescar token", description = "Obtiene un nuevo access token usando el refresh token")

@@ -26,10 +26,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain  filterChain (HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**", "/products/public/**", 
-                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
-                        .permitAll().requestMatchers("/admin/**").hasAuthority("ADMIN").requestMatchers("/orders/**", "/cart/**").hasRole("USER").anyRequest().authenticated()).sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authenticationProvider(authenticationProvider)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/products/public/**", 
+                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html",
+                        "/actuator/**", "/api/payments/webhook")
+                        .permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/client/cart/**", "/orders/**", "/api/payments/create-checkout-session").hasAuthority("CLIENT")
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
 

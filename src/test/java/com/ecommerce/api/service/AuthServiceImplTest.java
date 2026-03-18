@@ -4,8 +4,10 @@ import com.ecommerce.api.dto.AuthRequest;
 import com.ecommerce.api.dto.AuthResponse;
 import com.ecommerce.api.entity.User;
 import com.ecommerce.api.entity.enums.Role;
+import com.ecommerce.api.repository.RefreshTokenRepository;
 import com.ecommerce.api.repository.UserRepository;
 import com.ecommerce.api.security.JwtService;
+import com.ecommerce.api.service.EmailService;
 import com.ecommerce.api.service.impl.AuthServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -30,6 +33,9 @@ class AuthServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -38,25 +44,34 @@ class AuthServiceImplTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private UserDetailsService userDetailsService;
+
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
     @Test
     void login_WithValidCredentials_ReturnsToken() {
-        AuthRequest request = new AuthRequest();
-        request.setUsername("testuser");
-        request.setPassword("password123");
+        AuthRequest request = AuthRequest.builder()
+                .email("testuser@test.com")
+                .password("password123")
+                .build();
 
         User user = User.builder()
                 .id(1L)
                 .username("testuser")
+                .email("testuser@test.com")
                 .password("encodedPassword")
                 .role(Role.CLIENT)
+                .enabled(true)
                 .build();
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("testuser@test.com")).thenReturn(Optional.of(user));
         when(jwtService.generateToken(user)).thenReturn("jwt-token-123");
 
         AuthResponse response = authService.login(request);
@@ -64,19 +79,21 @@ class AuthServiceImplTest {
         assertNotNull(response);
         assertEquals("jwt-token-123", response.getToken());
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userRepository).findByUsername("testuser");
+        verify(userRepository).findByEmail("testuser@test.com");
         verify(jwtService).generateToken(user);
     }
 
     @Test
     void register_WithNewUser_ReturnsTokenAndSavesUser() {
-        AuthRequest request = new AuthRequest();
-        request.setUsername("newuser");
-        request.setPassword("password123");
+        AuthRequest request = AuthRequest.builder()
+                .email("newuser@test.com")
+                .password("password123")
+                .build();
 
         User savedUser = User.builder()
                 .id(1L)
                 .username("newuser")
+                .email("newuser@test.com")
                 .password("encodedPassword")
                 .role(Role.CLIENT)
                 .build();
@@ -88,21 +105,21 @@ class AuthServiceImplTest {
         AuthResponse response = authService.register(request);
 
         assertNotNull(response);
-        assertEquals("jwt-token-new", response.getToken());
         verify(passwordEncoder).encode("password123");
         verify(userRepository).save(any(User.class));
-        verify(jwtService).generateToken(any(User.class));
     }
 
     @Test
     void register_SavesUserWithRoleClient() {
-        AuthRequest request = new AuthRequest();
-        request.setUsername("clientuser");
-        request.setPassword("password123");
+        AuthRequest request = AuthRequest.builder()
+                .email("clientuser@test.com")
+                .password("password123")
+                .build();
 
         User savedUser = User.builder()
                 .id(1L)
                 .username("clientuser")
+                .email("clientuser@test.com")
                 .password("encodedPassword")
                 .role(Role.CLIENT)
                 .build();

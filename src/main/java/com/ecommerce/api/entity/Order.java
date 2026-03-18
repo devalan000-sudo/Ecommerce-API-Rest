@@ -23,10 +23,20 @@ public class Order {
     private LocalDateTime date;
     private BigDecimal total;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    private String stripeSessionId;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
+
+    public enum PaymentStatus {
+        PENDING, PAID, FAILED, CANCELLED
+    }
 }

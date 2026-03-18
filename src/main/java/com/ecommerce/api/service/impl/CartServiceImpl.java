@@ -3,12 +3,15 @@ package com.ecommerce.api.service.impl;
 import com.ecommerce.api.dto.CartItemRequest;
 import com.ecommerce.api.dto.CartItemResponse;
 import com.ecommerce.api.entity.CartItem;
+import com.ecommerce.api.entity.Order;
+import com.ecommerce.api.entity.OrderItem;
 import com.ecommerce.api.entity.Product;
 import com.ecommerce.api.entity.User;
 import com.ecommerce.api.exception.BusinessException;
 import com.ecommerce.api.exception.ResourseNotFoundException;
 import com.ecommerce.api.mappers.CartMapper;
 import com.ecommerce.api.repository.CartItemRepository;
+import com.ecommerce.api.repository.OrderRepository;
 import com.ecommerce.api.repository.ProductRepository;
 import com.ecommerce.api.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -25,6 +31,7 @@ public class CartServiceImpl implements CartService {
 
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
     private final CartMapper cartMapper;
 
 
@@ -60,21 +67,51 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void checkout(User user) {
+    public Order checkout(User user) {
         List<CartItem> items = cartItemRepository.findByUser(user);
         if (items.isEmpty()){
             throw new BusinessException("El carrito esta vacio");
         }
+        
+        BigDecimal total = BigDecimal.ZERO;
+        List<OrderItem> orderItems = new ArrayList<>();
+        
         for (CartItem item : items) {
             Product p = item.getProduct();
             if ((p.getStock() < item.getQuantity())){
                 throw new BusinessException("No hay suficiente producto en el stock");
             }
-            p.setStock(p.getStock() -  item.getQuantity());
+            p.setStock(p.getStock() - item.getQuantity());
+            
+            BigDecimal itemTotal = p.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            total = total.add(itemTotal);
+            
+            OrderItem orderItem = OrderItem.builder()
+                    .product(p)
+                    .quantity(item.getQuantity())
+                    .price(p.getPrice())
+                    .build();
+            orderItems.add(orderItem);
         }
+        
+        Order order = Order.builder()
+                .user(user)
+                .date(LocalDateTime.now())
+                .total(total)
+                .items(orderItems)
+                .paymentStatus(Order.PaymentStatus.PENDING)
+                .build();
+        
+        for (OrderItem item : orderItems) {
+            item.setOrder(order);
+        }
+        
+        order = orderRepository.save(order);
         cartItemRepository.deleteAll(items);
         
-        log.info("Checkout completado para usuario {}", user.getUsername());
+        log.info("Checkout completado para usuario {}. Orden ID: {}", user.getUsername(), order.getId());
+        
+        return order;
     }
 
     @Override
