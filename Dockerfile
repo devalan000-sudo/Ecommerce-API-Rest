@@ -3,12 +3,9 @@ FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 
 COPY .mvn/ .mvn
-COPY mvnw mvnw.cmd
-COPY pom.xml .
+COPY pom.xml ./
 
-RUN apk add --no-cache maven
-
-RUN ./mvnw dependency:go-offline -B
+RUN chmod +x mvnw && sed -i 's/\r$//' mvnw
 
 COPY src src
 
