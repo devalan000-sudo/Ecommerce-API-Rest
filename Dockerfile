@@ -10,10 +10,11 @@ RUN chmod +x mvnw && sed -i 's/\r$//' mvnw
 
 COPY src src
 
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw clean package -DskipTests && \
+    cp target/*.jar app.jar
 
 WORKDIR /app/target
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "target/api-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
